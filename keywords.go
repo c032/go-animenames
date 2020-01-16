@@ -31,6 +31,7 @@ var audioCodecs = []string{
 	"aac",
 	"ac3",
 	"flac",
+	"opus",
 }
 
 var extensions = []string{
