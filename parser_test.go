@@ -186,58 +186,55 @@ var parserTests = map[string]*animenames.Anime{
 }
 
 func TestParse(t *testing.T) {
-	for name, expected := range parserTests {
-		result, err := animenames.Parse(name)
+	for name, expectedAnime := range parserTests {
+		gotAnime, err := animenames.Parse(name)
 		if err != nil {
 			t.Fatal(err)
 		}
-		if result == nil {
-			t.Fatal("expecting anime")
+
+		if gotAnime.Title != expectedAnime.Title {
+			t.Errorf("animenames.Parse(%#v).Title = %#v; expected %#v", name, gotAnime.Title, expectedAnime.Title)
 		}
 
-		if result.Title != expected.Title {
-			t.Fatalf("expecting Anime.Title of %#v to be %#v (got %#v)", name, expected.Title, result.Title)
+		if gotAnime.Year != expectedAnime.Year {
+			t.Errorf("animenames.Parse(%#v).Year = %#v; expected %#v", name, gotAnime.Year, expectedAnime.Year)
 		}
 
-		if result.Year != expected.Year {
-			t.Fatalf("expecting Anime.Year of %#v to be %#v (got %#v)", name, expected.Year, result.Year)
+		if gotAnime.Episode != expectedAnime.Episode {
+			t.Errorf("animenames.Parse(%#v).Episode = %#v; expected %#v", name, gotAnime.Episode, expectedAnime.Episode)
 		}
 
-		if result.Episode != expected.Episode {
-			t.Fatalf("expecting Anime.Episode of %#v to be `%d` (got `%d`)", name, expected.Episode, result.Episode)
+		if gotAnime.Season != expectedAnime.Season {
+			t.Errorf("animenames.Parse(%#v).Season = %#v; expected %#v", name, gotAnime.Season, expectedAnime.Season)
 		}
 
-		if result.Season != expected.Season {
-			t.Fatalf("expecting Anime.Season of %#v to be %d (got %d)", name, expected.Season, result.Season)
+		if gotAnime.Volume != expectedAnime.Volume {
+			t.Errorf("animenames.Parse(%#v).Volume = %#v; expected %#v", name, gotAnime.Volume, expectedAnime.Volume)
 		}
 
-		if result.Volume != expected.Volume {
-			t.Fatalf("expecting Anime.Volume of %#v to be `%d` (got `%d`)", name, expected.Volume, result.Volume)
+		if gotAnime.Group != expectedAnime.Group {
+			t.Errorf("animenames.Parse(%#v).Group = %#v; expected %#v", name, gotAnime.Group, expectedAnime.Group)
 		}
 
-		if result.Group != expected.Group {
-			t.Fatalf("expecting Anime.Group of %#v to be %#v (got %#v)", name, expected.Group, result.Group)
+		if gotAnime.CRC32 != expectedAnime.CRC32 {
+			t.Errorf("animenames.Parse(%#v).CRC32 = %#v; expected %#v", name, gotAnime.CRC32, expectedAnime.CRC32)
 		}
 
-		if result.CRC32 != expected.CRC32 {
-			t.Fatalf("expecting Anime.CRC32 of %#v to be %#v (got %#v)", name, expected.CRC32, result.CRC32)
+		if gotAnime.IsOVA != expectedAnime.IsOVA {
+			t.Errorf("animenames.Parse(%#v).IsOVA = %#v; expected %#v", name, gotAnime.IsOVA, expectedAnime.IsOVA)
 		}
 
-		if result.IsOVA != expected.IsOVA {
-			t.Fatalf("expecting Anime.IsOVA of %#v to be %#v (got %#v)", name, expected.IsOVA, result.IsOVA)
+		if gotAnime.IsBD != expectedAnime.IsBD {
+			t.Errorf("animenames.Parse(%#v).IsBD = %#v; expected %#v", name, gotAnime.IsBD, expectedAnime.IsBD)
 		}
 
-		if result.IsBD != expected.IsBD {
-			t.Fatalf("expecting Anime.IsBD of %#v to be %#v (got %#v)", name, expected.IsBD, result.IsBD)
-		}
-
-		if expected.Batch != nil {
-			if result.Batch.Start != expected.Batch.Start {
-				t.Fatalf("expecting Anime.Batch.Start of %#v to be %#v (got %#v)", name, expected.Batch.Start, result.Batch.Start)
+		if expectedAnime.Batch != nil {
+			if gotAnime.Batch.Start != expectedAnime.Batch.Start {
+				t.Errorf("expecting Anime.Batch.Start of %#v to be %#v (got %#v)", name, expectedAnime.Batch.Start, gotAnime.Batch.Start)
 			}
 
-			if result.Batch.End != expected.Batch.End {
-				t.Fatalf("expecting Anime.Batch.End of %#v to be %#v (got %#v)", name, expected.Batch.End, result.Batch.End)
+			if gotAnime.Batch.End != expectedAnime.Batch.End {
+				t.Errorf("expecting Anime.Batch.End of %#v to be %#v (got %#v)", name, expectedAnime.Batch.End, gotAnime.Batch.End)
 			}
 		}
 	}

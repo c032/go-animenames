@@ -3,68 +3,89 @@ package animenames
 import (
 	"container/list"
 	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 
 	"git.wark.io/lib/textutil-go"
 )
 
-// Parse returns anime information from a file name.
-func Parse(name string) (anime *Anime, err error) {
-	var (
-		chunk   string
-		year    int
-		episode int
-	)
+var (
+	ErrCouldNotParseName = errors.New("could not parse name")
+	ErrNotAString        = errors.New("not a string")
+	ErrInvalidSeason     = errors.New("invalid season")
+	ErrInvalidEpisode    = errors.New("invalid episode")
+	ErrInvalidYear       = errors.New("invalid year")
+)
 
-	anime = new(Anime)
+// Parse returns anime information from a file name.
+func Parse(name string) (Anime, error) {
+	anime := Anime{}
 
 	for _, ext := range extensions {
 		if strings.HasSuffix(name, "."+ext) {
 			name = strings.TrimSuffix(name, "."+ext)
+
 			break
 		}
 	}
 
 	chunks := textutil.SplitParens(name)
-
-	// There's nothing to parse.
 	if len(chunks) == 0 {
-		return
+		err := fmt.Errorf("%w: %#v", ErrCouldNotParseName, name)
+
+		return anime, err
 	}
 
+	// Either the name has no parens, or the outer parens are wrappinge
+	// everything.
 	if len(chunks) == 1 {
+		var (
+			err error
+
+			chunk string
+		)
+
 		chunk = strings.TrimSpace(chunks[0])
 
-		// If the whole chunk is wrapped inside parens, remove them.
+		// Remove outer parens wrapping the whole chunk.
 		chunk = textutil.StripParens(chunk)
-		chunk = strings.TrimSpace(chunks[0])
+		chunk = strings.TrimSpace(chunk)
 
 		chunk = strings.Join(removeKeywords(chunk), " ")
 
-		err = parseMain(anime, chunk)
+		// Usually when there's parens wrapping everything, there's no inner
+		// parens.
+		//
+		// If names with mixed outer + inner parens start appearing, we
+		// probably should change this for a recursive call to `Parse`.
+		err = parseMain(chunk, &anime)
 		if err != nil {
-			return
+			return anime, err
 		}
 
-		return
+		return anime, nil
 	}
 
-	// More than 1 chunk.
+	return parseMultipleChunks(chunks)
+}
 
-	// Convert the chunk slice to a doubly-linked list.
-	l := list.New()
-	for _, chunk := range chunks {
-		l.PushBack(chunk)
-	}
+func parseMultipleChunks(chunks []string) (Anime, error) {
+	anime := Anime{}
 
-	// Find CRC32.
-	//
-	// Search from right to left.
+	l := chunksToList(chunks)
+
+	// Search CRC32, from right to left.
 	for e := l.Back(); e != nil; e = e.Prev() {
+		var (
+			err error
+
+			chunk string
+		)
+
 		chunk, err = elementToString(e)
 		if err != nil {
-			return
+			return anime, err
 		}
 
 		noparens := textutil.StripParens(chunk)
@@ -78,33 +99,34 @@ func Parse(name string) (anime *Anime, err error) {
 
 		// CRC32 is only one word, so we ignore chunks with more
 		// than that.
-		words := regexpWordSplit.Split(chunk, -1)
+		words := splitByWords(chunk)
 		if len(words) != 1 {
 			continue
 		}
 
 		checksum := words[0]
-
-		// Check whether CRC32 has valid syntax.
-		if !regexpCRC32.MatchString(checksum) {
+		if !isCRC32(checksum) {
 			continue
 		}
 
 		anime.CRC32 = checksum
 
-		// Remove the CRC32 node from the list.
 		l.Remove(e)
 
 		break
 	}
 
-	// Remove extension.
-	//
-	// Search from right to left.
+	// Remove extension, searching from right to left.
 	for e := l.Back(); e != nil; e = e.Prev() {
+		var (
+			err error
+
+			chunk string
+		)
+
 		chunk, err = elementToString(e)
 		if err != nil {
-			return
+			return anime, err
 		}
 
 		noparens := textutil.StripParens(chunk)
@@ -121,11 +143,13 @@ func Parse(name string) (anime *Anime, err error) {
 			if strings.HasSuffix(chunk, "."+ext) {
 				// Remove the extension.
 				chunk = strings.TrimSuffix(chunk, "."+ext)
+
 				break
 			}
 		}
 
-		// Remove the extension from the current node.
+		// Remove the extension from the current element, but keep the element
+		// in the list because it might contain additional information.
 		e.Value = chunk
 
 		break
@@ -133,29 +157,45 @@ func Parse(name string) (anime *Anime, err error) {
 
 	// Try to find the group/fansub at the leftmost chunk.
 	if e := l.Front(); e != nil {
+		var (
+			err error
+
+			chunk string
+		)
+
 		chunk, err = elementToString(e)
 		if err != nil {
-			return
+			return anime, err
 		}
 
 		// Group is usually inside parens.
 		if noparens := textutil.StripParens(chunk); chunk != noparens {
 			anime.Group = noparens
 
-			// Remove the "group" node from the list.
 			l.Remove(e)
 		}
 	}
 
-	// We looked the most common info in their common places.
+	// At this point we have looked the most common info in their common
+	// places. From here onwards the guesswork becomes harder.
 
-	// Try to parse everything else.
+	// When naming files, there's a tendency to put the series name at the left
+	// side, and the additional information at the right side.
 	//
-	// Read from right to left.
+	// Since the additional information consists mostly of well-known keywords,
+	// it's better to read chunks from right to left to decrease our chances of
+	// accidentally trimming the series name (especially when it contains
+	// numbers in the middle).
 	for e := l.Back(); e != nil; e = e.Prev() {
+		var (
+			err error
+
+			chunk string
+		)
+
 		chunk, err = elementToString(e)
 		if err != nil {
-			return
+			return anime, fmt.Errorf("invalid chunk %#v: %w", chunk, err)
 		}
 
 		chunk = strings.TrimSpace(chunk)
@@ -165,12 +205,15 @@ func Parse(name string) (anime *Anime, err error) {
 
 		noparens := textutil.StripParens(chunk)
 
-		// If text is inside parens, try to find useful info.
 		if chunk != noparens {
-			parseKeywords(anime, noparens)
+			// `chunk` was surrounded by parens. Chances are there's some
+			// keywords in here.
+			parseKeywords(noparens, &anime)
 		}
 
 		// Keywords should be parsed already. We don't need them.
+		//
+		// NOTE: Maybe combine with `parseKeywords`.
 		words := removeKeywords(noparens)
 
 		// No words left. Nothing to do.
@@ -178,9 +221,11 @@ func Parse(name string) (anime *Anime, err error) {
 			continue
 		}
 
-		// If there's at least one keyword, and we're inside parens,
-		// assume all words are keywords.
-		if allwords := regexpWordSplit.Split(chunk, -1); chunk != noparens && len(allwords) > len(words) {
+		// If `chunk` is surrounded by parens, and we have found at least one
+		// keyword, assume all words are keywords (known or unknown).
+		//
+		// TODO: Simplify.
+		if allwords := splitByWords(chunk); chunk != noparens && len(allwords) > len(words) {
 			continue
 		}
 
@@ -188,11 +233,15 @@ func Parse(name string) (anime *Anime, err error) {
 		//
 		// Ignore if we already have it.
 		if anime.Year == 0 && len(words) == 1 && regexpYear.MatchString(noparens) {
+			var year int
+
 			year, err = strconv.Atoi(noparens)
 			if err != nil {
-				return
+				return anime, fmt.Errorf("could not parse %#v: %w", noparens, ErrInvalidYear)
 			}
+
 			anime.Year = year
+
 			continue
 		}
 
@@ -202,14 +251,20 @@ func Parse(name string) (anime *Anime, err error) {
 		//
 		// Some shows have an episode 0. In those cases it should be
 		// parsed to 0 again (must confirm this).
-		//
-		// FIXME: Use -1 to indicate "no episode"?
 		if anime.Episode == 0 && len(words) == 1 && regexpEpisode.MatchString(noparens) {
+			var (
+				err error
+
+				episode int
+			)
+
 			episode, err = strconv.Atoi(noparens)
 			if err != nil {
-				return
+				return anime, fmt.Errorf("could not parse %#v: %w", noparens, ErrInvalidEpisode)
 			}
+
 			anime.Episode = episode
+
 			continue
 		}
 
@@ -218,6 +273,7 @@ func Parse(name string) (anime *Anime, err error) {
 		// Ignore if we already have it.
 		if anime.Group == "" && len(words) == 1 {
 			anime.Group = words[0]
+
 			continue
 		}
 
@@ -229,93 +285,48 @@ func Parse(name string) (anime *Anime, err error) {
 			continue
 		}
 
-		// `chunk` is text outside parens. Most likely containing
-		// anime title and episode number.
+		// `chunk` is text outside parens. Most likely containing anime title
+		// and episode number.
 
-		err = parseMain(anime, chunk)
+		err = parseMain(chunk, &anime)
 		if err != nil {
-			return
+			return anime, fmt.Errorf("could not parse chunk %#v: %w", chunk, err)
 		}
 	}
 
-	return
+	return anime, nil
 }
 
 // elementToString returns a list element as a string.
-func elementToString(e *list.Element) (value string, err error) {
-	var ok bool
+func elementToString(e *list.Element) (string, error) {
+	var (
+		ok bool
+
+		value string
+	)
 
 	value, ok = e.Value.(string)
 
 	if !ok {
-		err = errors.New("element is not string")
+		return "", ErrNotAString
 	}
 
-	return
+	return value, nil
 }
 
-// IsKeyword returns true when word is a known keyword and false otherwise.
-func IsKeyword(word string) bool {
-	if _, ok := aliases[word]; ok {
-		return true
-	}
+// parseMain parses a chunk of text outside parens, and updates `*anime`.
+func parseMain(chunk string, anime *Anime) error {
+	words := splitByWords(chunk)
 
-	lists := [][]string{
-		resolutions,
-		quality,
-		videoCodecs,
-		audioCodecs,
-		extensions,
-		otherProperties,
-	}
-
-	for _, list := range lists {
-		for _, keyword := range list {
-			if word == keyword {
-				return true
-			}
-		}
-	}
-
-	return false
-}
-
-// removeKeywords returns a slice with words from text, ignoring any keywords.
-func removeKeywords(text string) []string {
-	words := make([]string, 0)
-	allWords := regexpWordSplit.Split(text, -1)
-
-	for _, word := range allWords {
-		if IsKeyword(strings.ToLower(word)) {
-			continue
-		}
-		words = append(words, word)
-	}
-
-	return words
-}
-
-// parseKeywords tries to extract information from the keywords present in
-// the chunk.
-//
-// anime will be updated accordingly.
-func parseKeywords(anime *Anime, chunk string) {
-	words := regexpWordSplit.Split(chunk, -1)
-	for _, word := range words {
-		lword := strings.ToLower(word)
-
-		if lword == "bd" || lword == "bdrip" || lword == "blu-ray" || lword == "bluray" {
-			anime.IsBD = true
-			continue
-		}
-	}
-}
-
-// parseMain parses a chunk of text outside parens.
-func parseMain(anime *Anime, chunk string) error {
-	words := regexpWordSplit.Split(chunk, -1)
+	// `split` is the index of either the season number or the episode number,
+	// whichever has lower value.
+	//
+	// Since by convention the series name is usually located at the left of
+	// the season number or the episode number, we take advantage of this index
+	// to discard everything from this index until the end of the chunk.
 	split := -1
 
+	// Look for the season number or episode number.
 	for i, word := range words {
 		m := regexpSeasonEpisode.FindStringSubmatch(word)
 		if m == nil {
@@ -324,18 +335,19 @@ func parseMain(anime *Anime, chunk string) error {
 
 		season, err := strconv.Atoi(m[1])
 		if err != nil {
-			return err
+			return fmt.Errorf("could not parse %#v: %w", m[1], ErrInvalidSeason)
 		}
 
 		episode, err := strconv.Atoi(m[2])
 		if err != nil {
-			return err
+			return fmt.Errorf("could not parse %#v: %w", m[2], ErrInvalidEpisode)
 		}
 
 		anime.Season = season
 		anime.Episode = episode
 
 		split = i
+
 		break
 	}
 
@@ -353,19 +365,19 @@ func parseMain(anime *Anime, chunk string) error {
 		Volume:  false,
 	}
 
+	// Series title.
 	title := ""
 
 	iterationCompleted := true
 
-	words = regexpWordSplit.Split(chunk, -1)
+	words = splitByWords(chunk)
 	for i := len(words) - 1; i >= 0; i-- {
 		word := words[i]
 
-		// If we don't complete an iteration it means that some
-		// special word was found in the previous iteration
-		// (e.g. episode number).
+		// If we don't complete an iteration it means that some special word
+		// was found in the previous iteration (e.g. episode number).
 		if !iterationCompleted {
-			// Anime title can't contain special words.
+			// Reset because anime title can't contain special words.
 			title = ""
 		}
 
@@ -373,7 +385,6 @@ func parseMain(anime *Anime, chunk string) error {
 
 		// Episode number.
 		if !ignore.Episode {
-
 			// Simple episode number.
 			if m := regexpEpisode.FindStringSubmatch(word); m != nil {
 				episode, err := strconv.Atoi(m[1])
@@ -405,6 +416,7 @@ func parseMain(anime *Anime, chunk string) error {
 				}
 
 				ignore.Episode = true
+
 				continue
 			}
 		}
@@ -416,6 +428,7 @@ func parseMain(anime *Anime, chunk string) error {
 				if err != nil {
 					return err
 				}
+
 				anime.Season = season
 				ignore.Season = true
 
@@ -427,6 +440,7 @@ func parseMain(anime *Anime, chunk string) error {
 		if ignore.Season && anime.Season != 0 {
 			if m := regexpSeason.FindStringSubmatch(word); m != nil {
 				anime.Season = 0
+
 				continue
 			}
 		}
@@ -438,8 +452,10 @@ func parseMain(anime *Anime, chunk string) error {
 				if err != nil {
 					return err
 				}
+
 				anime.Volume = volume
 				ignore.Volume = true
+
 				continue
 			}
 		}
@@ -447,12 +463,14 @@ func parseMain(anime *Anime, chunk string) error {
 		// Case sensitive.
 		if word == "OVA" {
 			anime.IsOVA = true
+
 			continue
 		}
 
 		// Case sensitive.
 		if word == "BD" {
 			anime.IsBD = true
+
 			continue
 		}
 
@@ -472,4 +490,14 @@ func parseMain(anime *Anime, chunk string) error {
 	anime.Title = title
 
 	return nil
+}
+
+func chunksToList(chunks []string) *list.List {
+	l := list.New()
+
+	for _, chunk := range chunks {
+		l.PushBack(chunk)
+	}
+
+	return l
 }
