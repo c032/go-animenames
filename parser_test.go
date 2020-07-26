@@ -183,6 +183,12 @@ var parserTests = map[string]*animenames.Anime{
 		IsBD:    true,
 		CRC32:   "2D3B6393",
 	},
+	"[Anime Time] Kaguya-sama wa Kokurasetai! (Love Is War) S2 - 01 [Dual Audio][HEVC 10bit x265][AAC].mkv": &animenames.Anime{
+		Title:   "Kaguya-sama wa Kokurasetai! (Love Is War)",
+		Group:   "Anime Time",
+		Episode: 1,
+		Season:  2,
+	},
 }
 
 func TestParse(t *testing.T) {

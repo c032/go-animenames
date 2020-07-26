@@ -179,6 +179,11 @@ func parseMultipleChunks(chunks []string) (Anime, error) {
 	// At this point we have looked the most common info in their common
 	// places. From here onwards the guesswork becomes harder.
 
+	// Used to keep track of text inside parens that's actually part of the
+	// title.
+	titleSuffix := ""
+	keepTitleSuffix := false
+
 	// When naming files, there's a tendency to put the series name at the left
 	// side, and the additional information at the right side.
 	//
@@ -187,6 +192,12 @@ func parseMultipleChunks(chunks []string) (Anime, error) {
 	// accidentally trimming the series name (especially when it contains
 	// numbers in the middle).
 	for e := l.Back(); e != nil; e = e.Prev() {
+		if keepTitleSuffix {
+			keepTitleSuffix = false
+		} else {
+			titleSuffix = ""
+		}
+
 		var (
 			err error
 
@@ -282,11 +293,20 @@ func parseMultipleChunks(chunks []string) (Anime, error) {
 		//
 		// Just ignore.
 		if chunk != noparens {
+			if len(chunk) >= 2 && chunk[0] == '(' && chunk[len(chunk)-1] == ')' {
+				titleSuffix = chunk
+				keepTitleSuffix = true
+			}
+
 			continue
 		}
 
 		// `chunk` is text outside parens. Most likely containing anime title
 		// and episode number.
+
+		if titleSuffix != "" {
+			chunk += " " + titleSuffix
+		}
 
 		err = parseMain(chunk, &anime)
 		if err != nil {
