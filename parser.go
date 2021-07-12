@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"git.wark.io/lib/textutil-go"
+	"github.com/c032/go-textutil"
 )
 
 var (

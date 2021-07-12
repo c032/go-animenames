@@ -1,5 +1,5 @@
-module git.wark.io/lib/animenames-go
+module github.com/c032/go-animenames
 
-go 1.13
+go 1.16
 
-require git.wark.io/lib/textutil-go v0.0.0-20200113173915-c05d6abdf390
+require github.com/c032/go-textutil v0.0.0-20210712105727-1d87abdd6fc0

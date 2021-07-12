@@ -3,7 +3,7 @@ package animenames_test
 import (
 	"testing"
 
-	"git.wark.io/lib/animenames-go"
+	"github.com/c032/go-animenames"
 )
 
 var parserTests = map[string]*animenames.Anime{
