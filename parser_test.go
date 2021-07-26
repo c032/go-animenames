@@ -189,6 +189,33 @@ var parserTests = map[string]*animenames.Anime{
 		Episode: 1,
 		Season:  2,
 	},
+	"[EMBER] Kanojo mo Kanojo S01E03 [1080p] [HEVC WEBRip] (Girlfriend, Girlfriend)": &animenames.Anime{
+		Title:   "Kanojo mo Kanojo",
+		Group:   "EMBER",
+		Episode: 3,
+		Season:  1,
+	},
+	"[Fix-Fontsizecolor] Strike the Blood IV - 12 (BD 1920x1080 x265 FLAC)": &animenames.Anime{
+		Title:   "Strike the Blood IV",
+		Group:   "Fix-Fontsizecolor",
+		Episode: 12,
+		IsBD:    true,
+	},
+	"[CBM] Uzaki-chan Wants to Hang Out! 1-12 Complete (Dual Audio) [BDRip 1080p x265 10bit]": &animenames.Anime{
+		Title: "Uzaki-chan Wants to Hang Out!",
+		Group: "CBM",
+		IsBD:  true,
+		Batch: &animenames.Batch{
+			Start: 1,
+			End:   12,
+		},
+	},
+	"[ΑΩ] Uzaki-chan wa Asobitai! Vol.3 (BD Remux 1920x1080 AVC PCM)": &animenames.Anime{
+		Title:  "Uzaki-chan wa Asobitai!",
+		Group:  "ΑΩ",
+		Volume: 3,
+		IsBD:   true,
+	},
 }
 
 func TestParse(t *testing.T) {
