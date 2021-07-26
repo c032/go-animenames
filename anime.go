@@ -11,8 +11,9 @@ type Anime struct {
 	Group   string
 	CRC32   string
 
-	IsOVA bool
-	IsBD  bool
+	IsOVA       bool
+	IsBD        bool
+	HasSpecials bool
 }
 
 // Batch describes a batch.

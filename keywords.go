@@ -9,6 +9,8 @@ var aliases = map[string]string{
 	"bluray":  "bd",
 	"h.264":   "h264",
 	"x264":    "h264",
+	"sps":     "specials",
+	"special": "specials",
 }
 
 var resolutions = []string{
@@ -52,6 +54,7 @@ var otherProperties = []string{
 	"english",
 	"simuldub",
 	"uncensored",
+	"specials",
 }
 
 var keywordsMap = map[string]bool{}
@@ -99,8 +102,6 @@ func removeKeywords(text string) []string {
 
 // parseKeywords tries to extract information from the keywords present in the
 // chunk, and updates `*anime`.
-//
-// TODO: Return something indicating what was changed.
 func parseKeywords(chunk string, anime *Anime) {
 	words := splitByWords(chunk)
 
@@ -109,6 +110,12 @@ func parseKeywords(chunk string, anime *Anime) {
 
 		if lword == "bd" || lword == "bdrip" || lword == "blu-ray" || lword == "bluray" {
 			anime.IsBD = true
+
+			continue
+		}
+
+		if lword == "special" || lword == "specials" || lword == "sps" {
+			anime.HasSpecials = true
 
 			continue
 		}

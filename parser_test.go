@@ -217,19 +217,22 @@ var parserTests = map[string]*animenames.Anime{
 		IsBD:   true,
 	},
 	"[Pookie] Flying Witch + SPs [BD 1920x1080 x264 FLAC] [Dual-Audio]": &animenames.Anime{
-		Title: "Flying Witch",
-		Group: "Pookie",
-		IsBD:  true,
+		Title:       "Flying Witch",
+		Group:       "Pookie",
+		IsBD:        true,
+		HasSpecials: true,
 	},
 	"[RH] Flying Witch + Specials [Dual Audio] [BDRip] [Hi10] [1080p] [FLAC]": &animenames.Anime{
-		Title: "Flying Witch",
-		Group: "RH",
-		IsBD:  true,
+		Title:       "Flying Witch",
+		Group:       "RH",
+		IsBD:        true,
+		HasSpecials: true,
 	},
 	"[Golumpa] Flying Witch + Specials v2 [Dual Audio] [BDRip] [1080p] [10-bit] [MKV]": &animenames.Anime{
-		Title: "Flying Witch",
-		Group: "Golumpa",
-		IsBD:  true,
+		Title:       "Flying Witch",
+		Group:       "Golumpa",
+		IsBD:        true,
+		HasSpecials: true,
 	},
 }
 
@@ -274,6 +277,10 @@ func TestParse(t *testing.T) {
 
 		if gotAnime.IsBD != expectedAnime.IsBD {
 			t.Errorf("animenames.Parse(%#v).IsBD = %#v; expected %#v", name, gotAnime.IsBD, expectedAnime.IsBD)
+		}
+
+		if gotAnime.HasSpecials != expectedAnime.HasSpecials {
+			t.Errorf("animenames.Parse(%#v).HasSpecials = %#v; expected %#v", name, gotAnime.HasSpecials, expectedAnime.HasSpecials)
 		}
 
 		if expectedAnime.Batch != nil {

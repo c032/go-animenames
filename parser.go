@@ -494,8 +494,10 @@ func parseMain(chunk string, anime *Anime) error {
 			continue
 		}
 
-		// Assume "+" is not part of the name.
+		// Assume "+" is a separator.
 		if word == "+" {
+			parseKeywords(title, anime)
+
 			continue
 		}
 
