@@ -54,12 +54,9 @@ var otherProperties = []string{
 	"uncensored",
 }
 
-// isKeyword returns true when word is a known keyword and false otherwise.
-func isKeyword(word string) bool {
-	if _, ok := aliases[word]; ok {
-		return true
-	}
+var keywordsMap = map[string]bool{}
 
+func init() {
 	lists := [][]string{
 		resolutions,
 		quality,
@@ -71,13 +68,18 @@ func isKeyword(word string) bool {
 
 	for _, list := range lists {
 		for _, keyword := range list {
-			if word == keyword {
-				return true
-			}
+			keywordsMap[keyword] = true
 		}
 	}
+}
 
-	return false
+// isKeyword returns true when word is a known keyword and false otherwise.
+func isKeyword(word string) bool {
+	if _, ok := aliases[word]; ok {
+		return true
+	}
+
+	return keywordsMap[word]
 }
 
 // removeKeywords returns a slice with words from text, without any keywords.
