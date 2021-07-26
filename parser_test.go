@@ -216,6 +216,21 @@ var parserTests = map[string]*animenames.Anime{
 		Volume: 3,
 		IsBD:   true,
 	},
+	"[Pookie] Flying Witch + SPs [BD 1920x1080 x264 FLAC] [Dual-Audio]": &animenames.Anime{
+		Title: "Flying Witch",
+		Group: "Pookie",
+		IsBD:  true,
+	},
+	"[RH] Flying Witch + Specials [Dual Audio] [BDRip] [Hi10] [1080p] [FLAC]": &animenames.Anime{
+		Title: "Flying Witch",
+		Group: "RH",
+		IsBD:  true,
+	},
+	"[Golumpa] Flying Witch + Specials v2 [Dual Audio] [BDRip] [1080p] [10-bit] [MKV]": &animenames.Anime{
+		Title: "Flying Witch",
+		Group: "Golumpa",
+		IsBD:  true,
+	},
 }
 
 func TestParse(t *testing.T) {

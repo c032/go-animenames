@@ -494,6 +494,11 @@ func parseMain(chunk string, anime *Anime) error {
 			continue
 		}
 
+		// Assume "+" is not part of the name.
+		if word == "+" {
+			continue
+		}
+
 		// If nothing matches, just add the word to the title.
 		//
 		// Remember we're reading from right to left.
