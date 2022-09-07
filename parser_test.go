@@ -234,6 +234,25 @@ var parserTests = map[string]*animenames.Anime{
 		IsBD:        true,
 		HasSpecials: true,
 	},
+	"[ASW] 86 - Eighty Six [1080p HEVC x265 10Bit][AAC] (Batch)": &animenames.Anime{
+		Title: "86 - Eighty Six",
+		Group: "ASW",
+	},
+	"[SSA] Eighty Six Season 1 (1-11) [1080p][Batch]": &animenames.Anime{
+		Title: "Eighty Six Season 1",
+		Group: "SSA",
+		Batch: &animenames.Batch{
+			Start: 1,
+			End:   11,
+		},
+	},
+	"86": &animenames.Anime{
+		Title: "86",
+	},
+	"86 - 01": &animenames.Anime{
+		Title:   "86",
+		Episode: 1,
+	},
 }
 
 func TestParse(t *testing.T) {

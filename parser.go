@@ -389,6 +389,7 @@ func parseMain(chunk string, anime *Anime) error {
 	title := ""
 
 	iterationCompleted := true
+	episodeNumberIndex := -1
 
 	words = splitByWords(chunk)
 	for i := len(words) - 1; i >= 0; i-- {
@@ -415,6 +416,7 @@ func parseMain(chunk string, anime *Anime) error {
 				anime.Episode = episode
 
 				ignore.Episode = true
+				episodeNumberIndex = i
 				continue
 			}
 
@@ -509,11 +511,17 @@ func parseMain(chunk string, anime *Anime) error {
 		iterationCompleted = true
 	}
 
+	// Treat numbers at the beginning of the title as part of the title,
+	// instead of episode number.
+	if episodeNumberIndex == 0 {
+		title = words[0] + " " + title
+		anime.Episode = 0
+	}
+
 	// Remove some useless characters from the title.
 	title = strings.TrimSpace(title)
 	title = regexpSeriesTrim.ReplaceAllString(title, "")
 
-	// Finally.
 	anime.Title = title
 
 	return nil
