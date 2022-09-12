@@ -4,6 +4,8 @@ Parser for anime names that follow common naming conventions.
 
 ## Example
 
+(See [parser\_test.go](https://github.com/c032/go-animenames/blob/master/parser_test.go) for more examples.)
+
 ```go
 package main
 
