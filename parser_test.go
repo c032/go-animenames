@@ -253,6 +253,12 @@ var parserTests = map[string]*animenames.Anime{
 		Title:   "86",
 		Episode: 1,
 	},
+	"[Kantai] Eighty Six (86) - 23 (1920x1080 AC3) [05BD70FE].mkv": &animenames.Anime{
+		Title:   "Eighty Six (86)",
+		Group:   "Kantai",
+		Episode: 23,
+		CRC32:   "05BD70FE",
+	},
 }
 
 func TestParse(t *testing.T) {
